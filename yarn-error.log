@@ -1,0 +1,41 @@
+Arguments: 
+  /usr/local/bin/node /usr/local/bin/yarn
+
+PATH: 
+  /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+
+Yarn version: 
+  1.22.19
+
+Node version: 
+  16.17.0
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: EISDIR: illegal operation on a directory, read
+
+npm manifest: 
+  {
+    "name": "decagon-tests",
+    "version": "1.0.0",
+    "main": "src/classifier.js",
+    "author": "Bond <bonda@decagon.institute>",
+    "license": "MIT",
+    "private": true,
+    "scripts": {
+      "test": "jest"
+    },
+    "devDependencies": {
+      "@types/jest": "24.0.15",
+      "jest": "24.8.0",
+      "mockdate": "2.0.3"
+    }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
