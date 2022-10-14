@@ -8,12 +8,14 @@ const { getTrips, getDriver } = require("api");
 
  async function analysis() {
   try {
-    const trips = await getTrips();
-    const newTrips = [...trips];
+    const newTrips = await getTrips();
+    // const newTrips = [...trips];
+    //calculate totalamount by adding all amounts together
     const totalAmount = newTrips.reduce((acc, cur) => {
       acc += +cur.billedAmount || +cur.billedAmount.split(",").join("");
       return acc;
     }, 0);
+    // console.log(totalAmount)
 
     let testObj = {
       noOfCashTrips: 0,
@@ -21,7 +23,7 @@ const { getTrips, getDriver } = require("api");
       cashBilledTotal: 0,
       nonCashBilledTotal: 0,
     };
-    const totalCashTrips = newTrips.reduce((acc, cur) => {
+    newTrips.reduce((acc, cur) => {
       if (cur.isCash === true) {
         testObj.noOfCashTrips += 1;
         testObj.cashBilledTotal +=
@@ -31,14 +33,12 @@ const { getTrips, getDriver } = require("api");
         testObj.nonCashBilledTotal +=
           +cur.billedAmount || +cur.billedAmount.split(",").join("");
       }
-      return testObj;
     }, testObj);
 
     const driverIds = newTrips.map((el) => el.driverID);
     const uniqueDrivers = [...new Set(driverIds)];
     const details = uniqueDrivers.map((el) => getDriver(el));
     const final = await Promise.allSettled(details);
-
     let driversWithMoreCars = 0;
     for (let i = 0; i < final.length; i++) {
       if (final[i].status === "rejected") {
@@ -48,54 +48,69 @@ const { getTrips, getDriver } = require("api");
       }
     }
     const mostTrips = {};
-    let driversWithMoreTrips = [];
+    let driversWithMoreTrips = '';
+    //if the driver id property exsit in the object it should increment by 1 else set it to 1
     for (let i = 0; i < driverIds.length; i++) {
-      mostTrips[driverIds[i]] = (mostTrips[driverIds[i]] || 0) + 1;
+      mostTrips[driverIds[i]] = (mostTrips[driverIds[i]]+1 || 1);
     }
     let values = Object.values(mostTrips);
+    //get max of the values in the mosttrips object
     let max = Math.max(...values);
     for (key in mostTrips) {
+      //get the key with that max value and break the loop
       if (mostTrips[key] == max) {
-        driversWithMoreTrips.push(key);
+        driversWithMoreTrips=key;
+        break;
       }
     }
     let mostTripsByDriver = {};
-    let res = await getDriver(driversWithMoreTrips[0]);
-    mostTripsByDriver.name = res.name;
-    mostTripsByDriver.email = res.email;
-    mostTripsByDriver.phone = res.phone;
+    let DriverWithMostTripDetails = await getDriver(driversWithMoreTrips);
+    mostTripsByDriver.name = DriverWithMostTripDetails.name;
+    mostTripsByDriver.email = DriverWithMostTripDetails.email;
+    mostTripsByDriver.phone = DriverWithMostTripDetails.phone;
     mostTripsByDriver.noOfTrips = 0;
     mostTripsByDriver.totalAmountEarned = 0;
     for (let i = 0; i < newTrips.length; i++) {
-      if (newTrips[i].driverID == driversWithMoreTrips[0]) {
+      if (newTrips[i].driverID == driversWithMoreTrips) {
         mostTripsByDriver.totalAmountEarned +=
-          +newTrips[i].billedAmount ||
-          +newTrips[i].billedAmount.split(",").join("");
+          +newTrips[i].billedAmount || +newTrips[i].billedAmount.split(",").join("");
         mostTripsByDriver.noOfTrips += 1;
       }
     }
 
-    let obj2 = {};
-    obj2[driversWithMoreTrips[0]] = 0;
-    obj2[driversWithMoreTrips[1]] = 0;
+    const driverByAmount = {};
+    let highestEarnerId= '';
+    for (let i = 0; i < newTrips.length; i++) {
+      let eachAmount= +newTrips[i].billedAmount || +newTrips[i].billedAmount.split(",").join("");
+      driverByAmount[driverIds[i]] = (driverByAmount[driverIds[i]]+eachAmount) || eachAmount;
+    }
 
-    const objKeys = Object.keys(obj2);
-    newTrips.forEach((trip) => {
-      if (trip.driverID === objKeys[0]) {
-        obj2[driversWithMoreTrips[0]] +=
-          +trip.billedAmount || +trip.billedAmount.split(",").join("");
-      } else if (trip.driverID === objKeys[1]) {
-        obj2[driversWithMoreTrips[1]] +=
-          +trip.billedAmount || +trip.billedAmount.split(",").join("");
-      }
-    });
-    let maximum = 0;
-    for (key in obj2) {
-      if (obj2[`${key}`] > 0) {
-        maximum = key;
+    let amounts = Object.values(driverByAmount);
+    //get max of the values in the driverbyamount object
+    let maxAmt = Math.max(...amounts);
+    for (key in driverByAmount) {
+      //get the key with that max value and break the loop
+      if (driverByAmount[key] == maxAmt) {
+        highestEarnerId=key;
+        break;
       }
     }
-    const highestEarning = await getDriver(maximum);
+    // console.log(highestEarnerId)
+    let mostAmountByDriver = {};
+    let DriverWithMostAmountDetails = await getDriver(highestEarnerId);
+    mostAmountByDriver.name = DriverWithMostAmountDetails.name;
+    mostAmountByDriver.email = DriverWithMostAmountDetails.email;
+    mostAmountByDriver.phone = DriverWithMostAmountDetails.phone;
+    mostAmountByDriver.noOfTrips = 0;
+    mostAmountByDriver.totalAmountEarned = 0;
+    for (let i = 0; i < newTrips.length; i++) {
+      if (newTrips[i].driverID == highestEarnerId) {
+        mostAmountByDriver.totalAmountEarned +=
+          +newTrips[i].billedAmount || +newTrips[i].billedAmount.split(",").join("");
+          mostAmountByDriver.noOfTrips += 1;
+      }
+    }
+
     const result = {
       noOfCashTrips: testObj.noOfCashTrips,
       noOfNonCashTrips: testObj.noOfNonCashTrips,
@@ -104,17 +119,11 @@ const { getTrips, getDriver } = require("api");
       nonCashBilledTotal: Number(testObj.nonCashBilledTotal.toFixed(2)),
       noOfDriversWithMoreThanOneVehicle: driversWithMoreCars,
       mostTripsByDriver: mostTripsByDriver,
-      highestEarningDriver: {
-        name: highestEarning.name,
-        email: highestEarning.email,
-        phone: highestEarning.phone,
-        noOfTrips: mostTripsByDriver.noOfTrips,
-        totalAmountEarned: obj2[maximum],
-      },
+      highestEarningDriver: mostAmountByDriver,
     };
-    return result
-  } catch (e) {
-    console.log(e);
+    return result;
+  } catch (error) {
+    console.log(error);
   }
 }
 // console.log(analysis());
