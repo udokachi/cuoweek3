@@ -35,9 +35,9 @@ const { getTrips, getDriver } = require("api");
       }
     }, testObj);
 
-    const driverIds = newTrips.map((el) => el.driverID);
+    const driverIds = newTrips.map((trip) => trip.driverID);
     const uniqueDrivers = [...new Set(driverIds)];
-    const details = uniqueDrivers.map((el) => getDriver(el));
+    const details = uniqueDrivers.map((driverID) => getDriver(driverID));
     const final = await Promise.allSettled(details);
     let driversWithMoreCars = 0;
     for (let i = 0; i < final.length; i++) {

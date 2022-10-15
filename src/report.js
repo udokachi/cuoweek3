@@ -27,6 +27,7 @@ async function driverReport() {
           phone: final[i].value.phone,
           id: uniqueDrivers[i],
           vehicles: final[i].value.vehicleID.map(vehicleId=> getVehicle(vehicleId)),
+         
           trips: [],
           noOfTrips: 0,
           noOfCashTrips: 0,
@@ -84,8 +85,8 @@ async function driverReport() {
       }}})
     }
     let result=[];
-    for (key of Object.keys(resultObj)){
-      result.push(resultObj[key])
+    for (value of Object.values(resultObj)){
+      result.push(value)
     }
     return result
   }
